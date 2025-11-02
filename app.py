@@ -18,29 +18,37 @@ class StyleFinderApp:
     Main application class that orchestrates the Style Finder workflow.
     """
     
-    def __init__(self, dataset_path, serp_api_key=None):
+    def __init__(self, dataset_path):
         """
         Initialize the Style Finder application.
         
         Args:
             dataset_path (str): Path to the dataset file
-            serp_api_key (str, optional): SerpAPI key for product searches
             
         Raises:
             FileNotFoundError: If the dataset file is not found
             ValueError: If the dataset is empty or invalid
         """
-        # TODO: Check if dataset file exists and raise FileNotFoundError if not
+        # Load the dataset
+        if not os.path.exists(dataset_path):
+            raise FileNotFoundError(f"Dataset file not found: {dataset_path}")
             
-        # TODO: Load the dataset
+        self.data = pd.read_pickle(dataset_path)
+        if self.data.empty:
+            raise ValueError("The loaded dataset is empty")
         
-        # TODO: Check if dataset is empty and raise ValueError if it is
+        # Initialize components
+        self.image_processor = ImageProcessor(
+            image_size=config.IMAGE_SIZE,
+            norm_mean=config.NORMALIZATION_MEAN,
+            norm_std=config.NORMALIZATION_STD
+        )
         
-        # TODO: Initialize image processor component
-        
-        # TODO: Initialize LLM service component
-        
-        # TODO: Initialize search service component if API key is provided
+        self.llm_service = LlamaVisionService(
+            model_id=config.LLAMA_MODEL_ID,
+            project_id=config.PROJECT_ID,
+            region=config.REGION
+        )
 
     def process_image(self, image):
         """
