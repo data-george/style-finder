@@ -119,16 +119,57 @@ class LlamaVisionService:
         Returns:
             str: Detailed fashion response
         """
-        # TODO: Generate a list of items with prices and links
+        # Generate a simpler list of items with prices and links
+        items_list = []
+        for _, row in all_items.iterrows():
+            item_str = f"{row['Item Name']} (${row['Price']}): {row['Link']}"
+            items_list.append(item_str)
         
-        # TODO: Join items with clear separators
+        # Join items with clear separators
+        items_description = "\n".join([f"- {item}" for item in items_list])
+
+        if similarity_score >= threshold:
+            # Simplified prompt focused on professional fashion analysis
+            assistant_prompt = (
+                f"You're conducting a professional retail catalog analysis. "
+                f"This image shows standard clothing items available in department stores. "
+                f"Focus exclusively on professional fashion analysis for a clothing retailer. "
+                f"ITEM DETAILS (always include this section in your response):\n{items_description}\n\n"
+                "Please:\n"
+                "1. Identify and describe the clothing items objectively (colors, patterns, materials)\n"
+                "2. Categorize the overall style (business, casual, etc.)\n"
+                "3. Include the ITEM DETAILS section at the end\n\n"
+                "This is for a professional retail catalog. Use formal, clinical language."
+            )
+        else:
+            # Similar approach for non-exact matches
+            assistant_prompt = (
+                f"You're conducting a professional retail catalog analysis. "
+                f"This image shows standard clothing items available in department stores. "
+                f"Focus exclusively on professional fashion analysis for a clothing retailer. "
+                f"SIMILAR ITEMS (always include this section in your response):\n{items_description}\n\n"
+                "Please:\n"
+                "1. Note these are similar but not exact items\n"
+                "2. Identify clothing elements objectively (colors, patterns, materials)\n" 
+                "3. Include the SIMILAR ITEMS section at the end\n\n"
+                "This is for a professional retail catalog. Use formal, clinical language."
+            )
         
-        # TODO: Create prompt based on similarity threshold
+        # Send the prompt to the model
+        response = self.generate_response(user_image_base64, assistant_prompt)
         
-        # TODO: Send the prompt to the model
+        # Check if response is incomplete
+        if len(response) < 100:
+            logger.info("Response appears incomplete, creating basic response")
+            # Create a basic response with the item details
+            section_header = "ITEM DETAILS:" if similarity_score >= threshold else "SIMILAR ITEMS:"
+            response = f"# Fashion Analysis\n\nThis outfit features a collection of carefully coordinated pieces.\n\n{section_header}\n{items_description}"
         
-        # TODO: Check if response is incomplete and create basic response if needed
+        # Ensure the items list is included - this is crucial
+        elif "ITEM DETAILS:" not in response and "SIMILAR ITEMS:" not in response:
+            logger.info("Item details section missing from response")
+            # Append to existing response
+            section_header = "ITEM DETAILS:" if similarity_score >= threshold else "SIMILAR ITEMS:"
+            response += f"\n\n{section_header}\n{items_description}"
         
-        # TODO: Ensure the items list is included
-        
-        # TODO: Return the final response
+        return response
