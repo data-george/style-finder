@@ -31,18 +31,17 @@ class ImageProcessor:
             norm_mean (list): Normalization mean values for RGB channels
             norm_std (list): Normalization standard deviation values for RGB channels
         """
-        # TODO: Initialize the device (CPU or GPU)
-        # Hint: Use torch.device to determine if CUDA is available
-        self.device = None  # YOUR CODE HERE
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = resnet50(pretrained=True).to(self.device)
+        self.model.eval()  # Set model to evaluation mode
         
-        # TODO: Load the pre-trained ResNet50 model and set it to evaluation mode
-        # Hint: Use resnet50(pretrained=True) and move it to the device
-        self.model = None  # YOUR CODE HERE
+        # Image preprocessing pipeline
+        self.preprocess = transforms.Compose([
+            transforms.Resize(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=norm_mean, std=norm_std),
+        ])
         
-        # TODO: Create the preprocessing pipeline using transforms.Compose
-        # The pipeline should resize, convert to tensor, and normalize the image
-        self.preprocess = None  # YOUR CODE HERE
-    
     def encode_image(self, image_input, is_url=True):
         """
         Encode an image and extract its feature vector.
