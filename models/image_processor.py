@@ -95,18 +95,12 @@ class ImageProcessor:
             tuple: (Closest matching row, similarity score)
         """
         try:
-            # TODO: Extract all embedding vectors from the dataset
-            # Hint: Use np.vstack on the 'Embedding' column
-            dataset_vectors = None  # YOUR CODE HERE
+            dataset_vectors = np.vstack(dataset['Embedding'].dropna().values)
+            similarities = cosine_similarity(user_vector.reshape(1, -1), dataset_vectors)
             
-            # TODO: Calculate cosine similarity between user vector and all dataset vectors
-            # Hint: Use cosine_similarity from sklearn and reshape user_vector to (1, -1)
-            similarities = None  # YOUR CODE HERE
-            
-            # TODO: Find the index of the most similar vector and its similarity score
-            # Hint: Use np.argmax to find the index with the highest similarity
-            closest_index = None  # YOUR CODE HERE
-            similarity_score = None  # YOUR CODE HERE
+            # Find the index of the most similar vector
+            closest_index = np.argmax(similarities)
+            similarity_score = similarities[0][closest_index]
             
             # Retrieve the closest matching row
             closest_row = dataset.iloc[closest_index]
