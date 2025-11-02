@@ -67,15 +67,38 @@ class LlamaVisionService:
         try:
             logger.info("Sending request to LLM with prompt length: %d", len(prompt))
             
-            # TODO: Create the messages object
+            # Create the messages object
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": "data:image/jpeg;base64," + encoded_image,
+                            }
+                        }
+                    ]
+                }
+            ]
             
-            # TODO: Send the request to the model
+            # Send the request to the model
+            response = self.model.chat(messages=messages)
             
-            # TODO: Extract and validate the response
+            # Extract and validate the response
+            content = response['choices'][0]['message']['content']
             
-            # TODO: Check if response appears to be truncated
+            logger.info("Received response with length: %d", len(content))
             
-            # TODO: Return the content
+            # Check if response appears to be truncated
+            if len(content) >= 7900:  # Close to common model limits
+                logger.warning("Response may be truncated (length: %d)", len(content))
+            
+            return content
             
         except Exception as e:
             logger.error("Error generating response: %s", str(e))
