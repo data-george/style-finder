@@ -20,11 +20,9 @@ def get_all_items_for_image(image_url, dataset):
     Returns:
         DataFrame: All items related to the image
     """
-    # TODO: Find all items related to the image URL in the dataset
-    
-    # TODO: Log the number of items found
-    
-    # TODO: Return the related items
+    related_items = dataset[dataset['Image URL'] == image_url]
+    logger.info(f"Found {len(related_items)} items related to image URL: {image_url}")
+    return related_items
 
 def format_alternatives_response(user_response, alternatives, similarity_score, threshold=0.8):
     """
