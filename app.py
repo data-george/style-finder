@@ -60,27 +60,48 @@ class StyleFinderApp:
         Returns:
             str: Formatted response with fashion analysis
         """
-        # TODO: Save the image temporarily if it's not already a file path
+        # Save the image temporarily if it's not already a file path
+        if not isinstance(image, str):
+            temp_file = NamedTemporaryFile(delete=False, suffix=".jpg")
+            image_path = temp_file.name
+            image.save(image_path)
+        else:
+            image_path = image
         
-        # TODO: Encode the image using the image processor
+        # Step 1: Encode the image
+        user_encoding = self.image_processor.encode_image(image_path, is_url=False)
+        if user_encoding['vector'] is None:
+            return "Error: Unable to process the image. Please try another image."
         
-        # TODO: Check if encoding was successful
+        # Step 2: Find the closest match
+        closest_row, similarity_score = self.image_processor.find_closest_match(user_encoding['vector'], self.data)
+        if closest_row is None:
+            return "Error: Unable to find a match. Please try another image."
         
-        # TODO: Find the closest match in the dataset
+        print(f"Closest match: {closest_row['Item Name']} with similarity score {similarity_score:.2f}")
         
-        # TODO: Check if a match was found
+        # Step 3: Get all related items
+        all_items = get_all_items_for_image(closest_row['Image URL'], self.data)
+        if all_items.empty:
+            return "Error: No items found for the matched image."
         
-        # TODO: Log match details
+        # Step 4: Generate fashion response
+        bot_response = self.llm_service.generate_fashion_response(
+            user_image_base64=user_encoding['base64'],
+            matched_row=closest_row,
+            all_items=all_items,
+            similarity_score=similarity_score,
+            threshold=config.SIMILARITY_THRESHOLD
+        )
         
-        # TODO: Get all related items for the matched image
+        # Clean up temporary file
+        if not isinstance(image, str):
+            try:
+                os.unlink(image_path)
+            except:
+                pass
         
-        # TODO: Check if items were found
-        
-        # TODO: Generate fashion response using the LLM service
-        
-        # TODO: Clean up temporary files
-        
-        # TODO: Process and return the response
+        return process_response(bot_response)
 
 
 def create_gradio_interface(app):
