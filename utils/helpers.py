@@ -37,15 +37,35 @@ def format_alternatives_response(user_response, alternatives, similarity_score, 
     Returns:
         str: Enhanced response with alternatives
     """
-    # TODO: Check if user_response is problematic and create basic response if needed
+    # Check if user_response is problematic
+    if not user_response or any(phrase in user_response for phrase in [
+            "I'm not able to provide", 
+            "I cannot", 
+            "I apologize, but", 
+            "I don't feel comfortable"]):
+        # Create a basic response if the model refused
+        user_response = "## Fashion Analysis Results\n\nHere are the items detected in your image:"
     
-    # TODO: Add section header based on similarity score
+    if similarity_score >= threshold:
+        enhanced_response = user_response + "\n\n## Similar Items Found\n\nHere are some similar items we found:\n"
+    else:
+        enhanced_response = user_response + "\n\n## Similar Items Found\n\nHere are some visually similar items:\n"
     
-    # TODO: Count items and enforce maximum limit
+    # Count items added to ensure we're not exceeding reasonable limits
+    items_added = 0
+    max_items = 10
     
-    # TODO: Format each alternative item with proper Markdown
+    for item, alts in alternatives.items():
+        enhanced_response += f"\n### {item}:\n"
+        if alts:
+            for alt in alts[:3]:  # Limit to 3 alternatives per item
+                if items_added < max_items:
+                    enhanced_response += f"- {alt['title']} for {alt['price']} from {alt['source']} ([Buy it here]({alt['link']}))\n"
+                    items_added += 1
+        else:
+            enhanced_response += "- No alternatives found.\n"
     
-    # TODO: Return the enhanced response
+    return enhanced_response
 
 def process_response(response: str) -> str:
     """
