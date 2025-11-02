@@ -41,7 +41,7 @@ class ImageProcessor:
             transforms.ToTensor(),
             transforms.Normalize(mean=norm_mean, std=norm_std),
         ])
-        
+
     def encode_image(self, image_input, is_url=True):
         """
         Encode an image and extract its feature vector.
@@ -54,23 +54,30 @@ class ImageProcessor:
             dict: Contains 'base64' string and 'vector' (feature embedding)
         """
         try:
-            # TODO: Load the image based on the input type (URL or file path)
-            # Hint: Use requests.get for URLs and Image.open for file paths
-            # Don't forget to convert to RGB format
-            image = None  # YOUR CODE HERE
+            if is_url:
+                # Fetch the image from URL
+                response = requests.get(image_input)
+                response.raise_for_status()
+                image = Image.open(BytesIO(response.content)).convert("RGB")
+            else:
+                # Load the image from a local file
+                image = Image.open(image_input).convert("RGB")
+
+            # Convert image to Base64
+            buffered = BytesIO()
+            image.save(buffered, format="JPEG")
+            base64_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+            # Preprocess the image for ResNet50
+            input_tensor = self.preprocess(image).unsqueeze(0).to(self.device)
+
+            # Extract features using ResNet50
+            with torch.no_grad():
+                features = self.model(input_tensor)
             
-            # TODO: Convert image to Base64
-            # Hint: Use BytesIO and base64.b64encode
-            base64_string = None  # YOUR CODE HERE
-            
-            # TODO: Preprocess the image for ResNet50
-            # Hint: Use the preprocess pipeline and add a batch dimension with unsqueeze(0)
-            input_tensor = None  # YOUR CODE HERE
-            
-            # TODO: Extract features using ResNet50 and convert to numpy array
-            # Hint: Use torch.no_grad() to disable gradient calculation
-            feature_vector = None  # YOUR CODE HERE
-            
+            # Convert features to a NumPy array
+            feature_vector = features.cpu().numpy().flatten()
+
             return {"base64": base64_string, "vector": feature_vector}
         except Exception as e:
             print(f"Error encoding image: {e}")
