@@ -31,13 +31,27 @@ class LlamaVisionService:
             api_key (str, optional): API key for authentication
             max_tokens (int): Maximum tokens in the response
         """
-        # TODO: Set up authentication credentials
+        # Set up authentication credentials
+        credentials = Credentials(
+            url=f"https://{region}.ml.cloud.ibm.com",
+            api_key=api_key
+        )
+        self.client = APIClient(credentials)
         
-        # TODO: Initialize API client
+        # Define parameters for the model's behavior
+        params = TextChatParameters(
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens
+        )
         
-        # TODO: Define parameters for the model's behavior
-        
-        # TODO: Initialize the model inference object
+        # Initialize the model inference object
+        self.model = ModelInference(
+            model_id=model_id,
+            credentials=credentials,
+            project_id=project_id,
+            params=params
+        )
     
     def generate_response(self, encoded_image, prompt):
         """
